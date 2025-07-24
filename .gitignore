@@ -137,3 +137,24 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+# Project specific
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+prisma/migrations/
+.kiro/specs/nodejs-api-demo/tasks.md
+.kiro/specs/nodejs-api-demo/requirements.md
+.kiro/specs/nodejs-api-demo/design.md
