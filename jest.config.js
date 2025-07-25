@@ -36,9 +36,6 @@ module.exports = {
   testTimeout: 10000,
   clearMocks: true,
   restoreMocks: true,
-  moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1'
-  },
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
   verbose: true
 };

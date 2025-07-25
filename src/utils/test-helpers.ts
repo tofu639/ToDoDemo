@@ -37,16 +37,16 @@ export const generateTestUsers = (count: number = 3) => {
 
 // Authentication test helpers
 export const generateTestToken = (payload: any = { userId: 'test-user-id-1', email: 'test@example.com' }) => {
-  return jwt.sign(payload, process.env.JWT_SECRET || 'test-secret', { expiresIn: '1h' });
+  return jwt.sign(payload, process.env['JWT_SECRET'] || 'test-secret', { expiresIn: '1h' });
 };
 
 export const generateExpiredToken = (payload: any = { userId: 'test-user-id-1', email: 'test@example.com' }) => {
-  return jwt.sign(payload, process.env.JWT_SECRET || 'test-secret', { expiresIn: '-1h' });
+  return jwt.sign(payload, process.env['JWT_SECRET'] || 'test-secret', { expiresIn: '-1h' });
 };
 
 // Password test helpers
 export const generateHashedPassword = async (password: string = 'testPassword123') => {
-  const rounds = parseInt(process.env.BCRYPT_ROUNDS || '4');
+  const rounds = parseInt(process.env['BCRYPT_ROUNDS'] || '4');
   return await bcrypt.hash(password, rounds);
 };
 
@@ -127,9 +127,9 @@ export const mockUserDelete = (returnValue: any) => {
 // Test environment helpers
 export const setupTestEnvironment = () => {
   // Set test environment variables
-  process.env.NODE_ENV = 'test';
-  process.env.JWT_SECRET = 'test-jwt-secret';
-  process.env.BCRYPT_ROUNDS = '4';
+  process.env['NODE_ENV'] = 'test';
+  process.env['JWT_SECRET'] = 'test-jwt-secret';
+  process.env['BCRYPT_ROUNDS'] = '4';
 };
 
 export const cleanupTestEnvironment = () => {

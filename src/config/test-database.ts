@@ -16,22 +16,18 @@ export class TestDatabase {
 
   public async connect(): Promise<PrismaClient> {
     if (!this.prisma) {
+      const databaseUrl = process.env['DATABASE_URL'] || 'postgresql://localhost:5432/test';
       this.prisma = new PrismaClient({
         datasources: {
           db: {
-            url: process.env['DATABASE_URL'] || 'postgresql://test:test@localhost:5432/test_db',
+            url: databaseUrl,
           },
         },
         log: process.env['NODE_ENV'] === 'test' ? [] : ['query', 'info', 'warn', 'error'],
       });
 
       // Test the connection
-      try {
-        await this.prisma.$connect();
-      } catch (error) {
-        console.warn('Test database connection failed, using mocked database');
-        // In test environment, we'll use mocked database operations
-      }
+      await this.prisma.$connect();
     }
     return this.prisma;
   }
@@ -44,18 +40,13 @@ export class TestDatabase {
   }
 
   public async cleanup(): Promise<void> {
-    if (this.prisma && process.env['NODE_ENV'] === 'test') {
-      try {
-        // Clean up test data - be careful to only run in test environment
-        await this.prisma.user.deleteMany({});
-      } catch (error) {
-        // Ignore cleanup errors in test environment
-        console.warn('Test database cleanup failed:', error);
-      }
+    if (this.prisma) {
+      // Clean up test data in reverse order of dependencies
+      await this.prisma.user.deleteMany({});
     }
   }
 
-  public getPrismaClient(): PrismaClient | null {
+  public getPrisma(): PrismaClient | null {
     return this.prisma;
   }
 }
@@ -63,15 +54,32 @@ export class TestDatabase {
 // Export singleton instance
 export const testDatabase = TestDatabase.getInstance();
 
-// Helper functions for test setup
+// Helper functions for integration tests
 export const setupTestDatabase = async (): Promise<PrismaClient> => {
-  return await testDatabase.connect();
-};
-
-export const cleanupTestDatabase = async (): Promise<void> => {
+  const prisma = await testDatabase.connect();
   await testDatabase.cleanup();
+  return prisma;
 };
 
 export const teardownTestDatabase = async (): Promise<void> => {
+  await testDatabase.cleanup();
   await testDatabase.disconnect();
+};
+
+// Test data seeding helpers
+export const seedTestUser = async (prisma: PrismaClient, userData: any) => {
+  return await prisma.user.create({
+    data: userData,
+  });
+};
+
+export const seedTestUsers = async (prisma: PrismaClient, usersData: any[]) => {
+  const users = [];
+  for (const userData of usersData) {
+    const user = await prisma.user.create({
+      data: userData,
+    });
+    users.push(user);
+  }
+  return users;
 };
