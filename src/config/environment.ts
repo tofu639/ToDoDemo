@@ -15,8 +15,24 @@ interface EnvironmentConfig {
 }
 
 const getEnvironmentConfig = (): EnvironmentConfig => {
+  // Construct DATABASE_URL from components if available (Docker setup)
+  // Otherwise use direct DATABASE_URL (development/test setup)
+  let databaseUrl = process.env['DATABASE_URL'];
+  
+  if (!databaseUrl && process.env['DB_HOST']) {
+    // Construct DATABASE_URL from individual components (Docker)
+    const dbHost = process.env['DB_HOST'];
+    const dbPort = process.env['DB_PORT'] || '5432';
+    const dbName = process.env['DB_NAME'];
+    const dbUser = process.env['DB_USER'];
+    const dbPassword = process.env['DB_PASSWORD'];
+    
+    if (dbHost && dbName && dbUser && dbPassword) {
+      databaseUrl = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public&sslmode=disable`;
+    }
+  }
+
   const requiredEnvVars = [
-    'DATABASE_URL',
     'JWT_SECRET'
   ];
 
@@ -27,10 +43,15 @@ const getEnvironmentConfig = (): EnvironmentConfig => {
     }
   }
 
+  // Check for DATABASE_URL or components
+  if (!databaseUrl) {
+    throw new Error('Missing database configuration: Either DATABASE_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD must be provided');
+  }
+
   return {
     NODE_ENV: (process.env['NODE_ENV'] as 'development' | 'production' | 'test') || 'development',
     PORT: parseInt(process.env['PORT'] || '3000', 10),
-    DATABASE_URL: process.env['DATABASE_URL']!,
+    DATABASE_URL: databaseUrl,
     JWT_SECRET: process.env['JWT_SECRET']!,
     JWT_EXPIRES_IN: process.env['JWT_EXPIRES_IN'] || '24h',
     BCRYPT_ROUNDS: parseInt(process.env['BCRYPT_ROUNDS'] || '12', 10),

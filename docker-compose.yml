@@ -32,8 +32,14 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-nodejs_api_demo}?schema=public&sslmode=disable
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      # Database connection components - URL constructed at runtime
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-nodejs_api_demo}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # DATABASE_URL will be constructed from above components in the application
+      JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
