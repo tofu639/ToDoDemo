@@ -82,7 +82,7 @@ npm run test:watch -- --testPathPattern=integration
 Integration tests use:
 - **Supertest**: For HTTP request testing
 - **Jest Mocks**: For external dependencies (bcrypt, jsonwebtoken, Prisma)
-- **Test Environment**: Isolated test environment with `.env.test` configuration
+- **Test Environment**: Isolated test environment with `.env.test` configuration (copy from `.env.test.example`)
 - **Database Mocking**: Prisma client is mocked to avoid real database connections
 
 ## Test Data
