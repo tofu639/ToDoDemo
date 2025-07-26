@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config/environment';
 import { setupSwagger } from './config/swagger';
-import { connectDatabase } from './config/database';
+import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import routes from './routes';
 
@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
  * /health:
  *   get:
  *     summary: Health check endpoint
- *     description: Check if the API server is running and healthy
+ *     description: Check if the API server is running and healthy, including database connectivity
  *     tags: [Health]
  *     responses:
  *       200:
@@ -47,6 +47,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
  *                 environment:
  *                   type: string
  *                   example: "development"
+ *                 database:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: "connected"
  *             examples:
  *               healthy:
  *                 summary: Healthy server response
@@ -54,13 +60,66 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
  *                   status: "OK"
  *                   timestamp: "2023-12-01T12:00:00.000Z"
  *                   environment: "development"
+ *                   database:
+ *                     status: "connected"
+ *       503:
+ *         description: Server is unhealthy (database connection failed)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "ERROR"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 environment:
+ *                   type: string
+ *                 database:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: "disconnected"
  */
-app.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: config.NODE_ENV
-  });
+app.get('/health', async (_req, res) => {
+  const timestamp = new Date().toISOString();
+  
+  try {
+    // Check database connectivity
+    const isDatabaseHealthy = await checkDatabaseHealth();
+    
+    if (isDatabaseHealthy) {
+      res.status(200).json({
+        status: 'OK',
+        timestamp,
+        environment: config.NODE_ENV,
+        database: {
+          status: 'connected'
+        }
+      });
+    } else {
+      res.status(503).json({
+        status: 'ERROR',
+        timestamp,
+        environment: config.NODE_ENV,
+        database: {
+          status: 'disconnected'
+        }
+      });
+    }
+  } catch (error) {
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp,
+      environment: config.NODE_ENV,
+      database: {
+        status: 'disconnected'
+      }
+    });
+  }
 });
 
 // Mount API routes
